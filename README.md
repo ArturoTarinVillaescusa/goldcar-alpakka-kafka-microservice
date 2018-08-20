@@ -530,10 +530,35 @@ And we will implement also rest endpoints for these Transactions functionalitite
     • TransactionsSink
     • TransactionsFailureRetry
 
+### Build secured Docker container images for our microservices
+
+New Poc collected in the ODT-123 list.
 
 ### Connecting our microservices to a Kafka secured with Kerberos
 
 We will authenticate our microservices Kafka connections
+
+### Use Kafka Connect JDBC and KSQL
+
+New Poc collected in the ODT-123 list.
+
+### Manage partial failures communication between microservices using the Netflix opensource platform in combination with Alpakka
+
+New Poc collected in the ODT-123 list.
+
+### NGINX Plus Pocs
+
+New Poc collected in the ODT-123 list.
+
+* Nginx service discovery and load balancing
+* NGINX security layer: ModSecurity, OWASP core rule set, DDOS mitigation, Rate limiting, Secure Interporcesses Communication
+  (TLS termination with SSL communication between services)
+
+
+### Build a Machine Learning speculative Modl Serving algorithm
+
+New Poc collected in the ODT-123 list.
+
 
 ## USING LAGOM: AN OPENSOURCE MICROSERVICES FRAMEWORK
 
