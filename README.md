@@ -103,7 +103,7 @@ To do this we modify the Spring Boot controller adding these two endpoints:
 ![Alt text](images/parameterizedendpoints.png "Microservices parameterized endpoints")
 
 
-### Example 1: Testing the communication between Producers and Consumers
+### Example 1: Testing the communication between 1 Producer and 1 Consumer
 
 1) Call the Producer microservice endpoint in order to create 3 messages in a Kafka topic called "topicoejemplo":
 
@@ -127,19 +127,20 @@ but this is enougth for our testing purposes. This would be the endpoint that we
 http://localhost:8080/goldcar-alpakka-consumer-microservice/topicoejemplo/topicodestino
 ```
 
-La llamada al rest endpoint del microservicio consumidor se haría así:
-El programa leería los parámetros que hemos pasado en la url, leería los mensajes que hemos insertado en el
-tópico “topicoejemplo” y los insertaría en el tópico “topicodestino”:
+The execution will replicate the messages from "topicoejemplo" to "topicodestino" as seen below:
 
 ![Alt text](images/consumermicroservice.png "Consumer microservice")
 
 Now, any other microservice can consume the messages produced into "topicodestino".
 
-### Example 1 conclusions
+### Example 2: Testing the communication between 1 Producer and a chain of Consumers
+
+![Alt text](images/chainedconsumers.png "1 producer and multiple consumers")
+
+### Examples conclusion
 
 This would be the initial approach of our implementation of microservices, enabling a workflow communication
-using Reactive microservices based on Alpakka
-conenctors.
+using Reactive microservices based on Alpakka conenctors.
 
 
 ## PACKAGING OUR MICROSERVICE APPLICATION IN A CONTAINER IMAGE, DEPLOYING IT IN KUBERNETES, COLLECTING MICROSERVICE METRICS IN GRAFANA AND VERIFYING THAT HPA AUTOSCALING WORKS
