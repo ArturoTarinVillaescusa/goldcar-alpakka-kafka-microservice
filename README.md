@@ -147,6 +147,8 @@ using Reactive microservices based on Alpakka conenctors.
 
 ### Prerequisites
 
+***Minikube***
+
 You should have minikube installed.
 
 You should start minikube with at least 4GB of RAM:
@@ -170,6 +172,52 @@ You should install `jq` — a lightweight and flexible command-line JSON process
 
 You can find more [info about `jq` on the official website](https://github.com/stedolan/jq).
 
+
+***Docker EE trial***
+
+
+Alternatively, you can use the Docker EE trial link:
+
+
+![Alt text](images/dockereetrial.png "Docker EE trial")
+
+
+![Alt text](images/deploytomcatineetrial.png "How to deploy Tomcat in Docker EE Kubernetes")
+
+![Alt text](images/deploytomcatineetrial1.png "How to deploy Tomcat in Docker EE Kubernetes 1")
+
+
+![Alt text](images/deploytomcatineetrial2.png "How to deploy Tomcat in Docker EE Kubernetes 2")
+
+![Alt text](images/deploytomcatineetrial3.png "How to deploy Tomcat in Docker EE Kubernetes 3")
+
+![Alt text](images/deploytomcatineetrial4.png "How to deploy Tomcat in Docker EE Kubernetes 4")
+
+![Alt text](images/deploytomcatineetrial5.png "How to deploy Tomcat in Docker EE Kubernetes 5")
+
+![Alt text](images/deploytomcatineetrial6.png "How to deploy Tomcat in Docker EE Kubernetes 6")
+
+![Alt text](images/deploytomcatineetrial7.png "How to deploy Tomcat in Docker EE Kubernetes 7")
+
+![Alt text](images/deploytomcatineetrial8.png "How to deploy Tomcat in Docker EE Kubernetes 8")
+
+![Alt text](images/deploytomcatineetrial9.png "How to deploy Tomcat in Docker EE Kubernetes 9")
+
+![Alt text](images/deploytomcatineetrial10.png "How to deploy Tomcat in Docker EE Kubernetes 10")
+
+![Alt text](images/deploytomcatineetrial11.png "How to deploy Tomcat in Docker EE Kubernetes 11")
+
+![Alt text](images/deploytomcatineetrial12.png "How to deploy Tomcat in Docker EE Kubernetes 12")
+
+![Alt text](images/deploytomcatineetrial13.png "How to deploy Tomcat in Docker EE Kubernetes 13")
+
+![Alt text](images/deploytomcatineetrial14.png "How to deploy Tomcat in Docker EE Kubernetes 14")
+
+![Alt text](images/deploytomcatineetrial15.png "How to deploy Tomcat in Docker EE Kubernetes 15")
+
+![Alt text](images/deploytomcatineetrial16.png "How to deploy Tomcat in Docker EE Kubernetes 16")
+
+
 ### Installing Custom Metrics Api
 
 
@@ -178,6 +226,10 @@ Deploy the Metrics Server in the `kube-system` namespace:
 ```bash
 kubectl create -f monitoring/metrics-server
 ```
+
+
+![Alt text](images/deploymonitoring.png "Deploy monitoring metrics-server in Docker EE")
+
 
 After one minute the metric-server starts reporting CPU and memory usage for nodes and pods.
 

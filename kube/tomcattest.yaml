@@ -1,34 +1,32 @@
----
 apiVersion: apps/v1beta2
 kind: Deployment
 metadata:
-  name: tomcat-deployment
+  name: myapp
 spec:
   selector:
     matchLabels:
-      app: tomcat
-  replicas: 1
+      app: myapp
+  replicas: 2
   template:
     metadata:
       labels:
-        app: tomcat
+        app: myapp
     spec:
       containers:
       - name: tomcat
-        image: tomcat:9.0
+        image: a286788e-4e3f-4d3c-954d-169c36d5001d.dtr.dockertrial.com/example/tomcat:9.0
         ports:
         - containerPort: 8080
 ---
 apiVersion: v1
 kind: Service
 metadata:
-  name: tomcat
+  name: myapp-service
 spec:
-  ports:
-  - nodePort:30000
-    port: 80
-    targetPort: 8080
-  selector:
-    app: tomcat
   type: NodePort
-
+  selector:
+    app: myapp
+  ports:
+  - protocol: TCP
+    port: 8080
+    nodePort: 31100
