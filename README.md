@@ -173,8 +173,44 @@ You should install `jq` — a lightweight and flexible command-line JSON process
 You can find more [info about `jq` on the official website](https://github.com/stedolan/jq).
 
 
-***Docker EE trial***
+[There are other Kubernetes test environment alternatives](https://kubernetes.io/docs/tasks/run-application/run-stateless-application-deployment/)
 
+![Alt text](images/kubernetesenvironments.png "Other Kubernetes environments")
+
+***Kataconda***
+
+https://www.katacoda.com
+
+![Alt text](images/kataconda.png "Kataconda")
+
+
+***Play with Kubernetes***
+
+https://labs.play-with-k8s.com/
+
+![Alt text](images/playwithkubernetes.png "Play with Kubernetes")
+
+```bash
+1. Initialize cluster master node:
+
+kubeadm init --apiserver-advertise-address
+```
+
+![Alt text](images/playwithkubernetes1.png "Play with Kubernetes 1")
+
+```bash
+2. Initialize cluster networking:
+
+kubectl apply -n kube-system -f \
+"https://cloud.weave.works/k8s/net?k8s-version=$(kubectl version | base64 | tr -d '\n')"
+
+3. Create an nginx deployment:
+
+kubectl apply -f https://raw.githubusercontent.com/kubernetes/website/master/content/cn/docs/user-guide/nginx-app.yaml
+```
+
+
+***Docker EE trial***
 
 Alternatively, you can use the Docker EE trial link:
 
@@ -217,6 +253,17 @@ Alternatively, you can use the Docker EE trial link:
 
 ![Alt text](images/deploytomcatineetrial16.png "How to deploy Tomcat in Docker EE Kubernetes 16")
 
+[NOTE]
+---
+If you want to deploy this in Docker EE you will find that Docker EE has its own RBAC system,
+so it’s not possible to create ClusterRole objects, ClusterRoleBinding objects, or any other
+object that is created by using the /apis/rbac.authorization.k8s.io endpoints.
+---
+
+![Alt text](images/deploymonitoring.png "Deploy monitoring metrics-server in Docker EE")
+
+![Alt text](images/dockereekuberneteslimitations.png "Docker EE Kubernetes rbac.authorization.k8s.io limitation")
+
 
 ### Installing Custom Metrics Api
 
@@ -227,9 +274,7 @@ Deploy the Metrics Server in the `kube-system` namespace:
 kubectl create -f monitoring/metrics-server
 ```
 
-
-![Alt text](images/deploymonitoring.png "Deploy monitoring metrics-server in Docker EE")
-
+![Alt text](images/metrics-server.png "Create metrics server")
 
 After one minute the metric-server starts reporting CPU and memory usage for nodes and pods.
 
@@ -271,13 +316,14 @@ Deploy the Prometheus custom metrics API adapter:
 kubectl create -f monitoring/custom-metrics-api
 ```
 
+![Alt text](images/monitoring.png "Create monitoring components")
+
+
 List the custom metrics provided by Prometheus:
 
 ```bash
 kubectl get --raw "/apis/custom.metrics.k8s.io/v1beta1" | jq .
 ```
-
-
 
 ![Alt text](images/prometheuscustommetrics.png "Prometheus custom metrics")
 
@@ -306,24 +352,25 @@ docker build -t goldcar-alpakka-kafka-microservice .
 
 ![Alt text](images/dockerimages.png "docker images")
 
-### Deploying the sample Tomcat application
+### Deploying a Tomcat application to make sure that everything will work
 
 In order to check that Kubernetes deployments are working, before deploying our microservices,
 let's make a quick test with a Tomcat deployment:
 
 ```bash
 arturotarin@QOSMIO-X70B:~/Documents/Mistral/2018-08-13 OTD-129. PoC Reactive Microservices communication through Kafka topics using Alpakka/goldcar-alpakka-kafka-microservice
-$ cat kube/tomcattest.yaml
----
+arturotarin@QOSMIO-X70B:~/Documents/Mistral/2018-08-13 OTD-129. PoC Reactive Microservices communication through Kafka topics using Alpakka/goldcar-alpakka-kafka-microservice
+
+$ cat kube/tomcat.yaml
 apiVersion: apps/v1beta2
 kind: Deployment
 metadata:
-  name: tomcat-deployment
+  name: tomcat
 spec:
   selector:
     matchLabels:
       app: tomcat
-  replicas: 1
+  replicas: 2
   template:
     metadata:
       labels:
@@ -334,26 +381,62 @@ spec:
         image: tomcat:9.0
         ports:
         - containerPort: 8080
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: tomcat-service
+spec:
+  type: NodePort
+  selector:
+    app: tomcat
+  ports:
+  - protocol: TCP
+    port: 8080
+    nodePort: 31000
 
 arturotarin@QOSMIO-X70B:~/Documents/Mistral/2018-08-13 OTD-129. PoC Reactive Microservices communication through Kafka topics using Alpakka/goldcar-alpakka-kafka-microservice
-$ kubectl get pod
-NAME                                 READY     STATUS             RESTARTS   AGE
-backend-ff99c84bd-lgpgq              0/1       CrashLoopBackOff   19         42m
-frontend-7676854fcd-hb8vs            0/1       CrashLoopBackOff   19         42m
-tomcat-deployment-56ff5c79c5-8tnz9   1/1       Running            0          1m
 
-arturotarin@QOSMIO-X70B:~/Documents/Mistral/2018-08-13 OTD-129. PoC Reactive Microservices communication through Kafka topics using Alpakka/goldcar-alpakka-kafka-microservice
-$ kubectl expose deployment tomcat-deployment –-type=NodePort
-service "tomcat-deployment" exposed
+$ kubectl create -f kube/tomcat.yaml
+deployment "tomcat" created
+service "tomcat-service" created
 
-$ kubectl describe deployment tomcat-deployment
-Name:                   tomcat-deployment
+$ kubectl get deployments
+NAME      DESIRED   CURRENT   UP-TO-DATE   AVAILABLE   AGE
+tomcat    2         2         2            2           4m
+
+$ kubectl get pods
+NAME                      READY     STATUS    RESTARTS   AGE
+tomcat-56ff5c79c5-4g6fb   1/1       Running   0          4m
+tomcat-56ff5c79c5-7cfw5   1/1       Running   0          4m
+
+$ kubectl get services
+NAME             TYPE        CLUSTER-IP       EXTERNAL-IP   PORT(S)          AGE
+kubernetes       ClusterIP   10.96.0.1        <none>        443/TCP          38m
+tomcat-service   NodePort    10.111.165.247   <none>        8080:31000/TCP   4m
+
+$ kubectl get endpoints
+NAME             ENDPOINTS                         AGE
+kubernetes       192.168.99.100:8443               38m
+tomcat-service   172.17.0.7:8080,172.17.0.8:8080   5m
+
+$ kubectl expose deployment tomcat --type=NodePort
+service "tomcat" exposed
+
+$ kubectl get services
+NAME             TYPE        CLUSTER-IP       EXTERNAL-IP   PORT(S)          AGE
+kubernetes       ClusterIP   10.96.0.1        <none>        443/TCP          43m
+tomcat           NodePort    10.103.202.180   <none>        8080:31797/TCP   1m
+tomcat-service   NodePort    10.111.165.247   <none>        8080:31000/TCP   10m
+
+$ kubectl describe deployment tomcat
+Name:                   tomcat
 Namespace:              default
-CreationTimestamp:      Mon, 20 Aug 2018 08:54:00 +0200
+CreationTimestamp:      Tue, 21 Aug 2018 08:25:50 +0200
 Labels:                 <none>
 Annotations:            deployment.kubernetes.io/revision=1
 Selector:               app=tomcat
-Replicas:               1 desired | 1 updated | 1 total | 1 available | 0 unavailable
+Replicas:               2 desired | 2 updated | 2 total | 2 available | 0 unavailable
 StrategyType:           RollingUpdate
 MinReadySeconds:        0
 RollingUpdateStrategy:  25% max unavailable, 25% max surge
@@ -372,118 +455,61 @@ Conditions:
   Available      True    MinimumReplicasAvailable
   Progressing    True    NewReplicaSetAvailable
 OldReplicaSets:  <none>
-NewReplicaSet:   tomcat-deployment-56ff5c79c5 (1/1 replicas created)
+NewReplicaSet:   tomcat-56ff5c79c5 (2/2 replicas created)
 Events:
   Type    Reason             Age   From                   Message
   ----    ------             ----  ----                   -------
-  Normal  ScalingReplicaSet  4m    deployment-controller  Scaled up replica set tomcat-deployment-56ff5c79c5 to 1
+  Normal  ScalingReplicaSet  8m    deployment-controller  Scaled up replica set tomcat-56ff5c79c5 to 2
 
 ```
 
-### Deploying the application
+Tomcat is accessible using Minikube IP (mine is 192.168.99.100 VirtualBox's IP) and nodePort (31000):
+
+![Alt text](images/minikubetomcat.png "Tomcat deployed in Minikube")
+
+
+### Deploying the microservice application
 
 Deploy the application in Kubernetes with:
 
 ```bash
-$ cat kube/deployment.yaml
+$ cat kube/goldcarmicroservice.yaml
 ---
-apiVersion: extensions/v1beta1
+apiVersion: apps/v1beta1
 kind: Deployment
 metadata:
-  name: backend
+  name: goldcar-alpakka-kafka-microservice
 spec:
-  replicas: 1
+  replicas: 3
   template:
     metadata:
       labels:
-        app: backend
-      annotations:
-        prometheus.io/scrape: 'true'
+        app: goldcar-alpakka-kafka-microservice
     spec:
       containers:
-      - name: backend
+      - name: goldcar-alpakka-kafka-microservice
         image: goldcar-alpakka-kafka-microservice
         imagePullPolicy: IfNotPresent
-        env:
-        - name: ACTIVEMQ_BROKER_URL
-          value: "tcp://queue:61616"
-        - name: STORE_ENABLED
-          value: "false"
-        - name: WORKER_ENABLED
-          value: "true"
         ports:
-          - containerPort: 8080
-        livenessProbe:
-          initialDelaySeconds: 5
-          periodSeconds: 5
-          httpGet:
-            path: /health
-            port: 8080
-        resources:
-          limits:
-            memory: 512Mi
+        - containerPort: 8080
 ---
 apiVersion: v1
 kind: Service
 metadata:
-  name: backend
+  name: goldcar-alpakka-kafka-microservice-service
 spec:
-  ports:
-  - nodePort: 31000
-    port: 80
-    targetPort: 8080
-  selector:
-    app: backend
   type: NodePort
----
-apiVersion: extensions/v1beta1
-kind: Deployment
-metadata:
-  name: frontend
-spec:
-  replicas: 1
-  template:
-    metadata:
-      labels:
-        app: frontend
-    spec:
-      containers:
-      - name: frontend
-        image: goldcar-alpakka-kafka-microservice
-        imagePullPolicy: IfNotPresent
-        env:
-        - name: ACTIVEMQ_BROKER_URL
-          value: "tcp://queue:61616"
-        - name: STORE_ENABLED
-          value: "true"
-        - name: WORKER_ENABLED
-          value: "false"
-        ports:
-          - containerPort: 8080
-        livenessProbe:
-          initialDelaySeconds: 5
-          periodSeconds: 5
-          httpGet:
-            path: /health
-            port: 8080
-        resources:
-          limits:
-            memory: 512Mi
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: frontend
-spec:
-  ports:
-  - nodePort: 32000
-    port: 80
-    targetPort: 8080
   selector:
-    app: frontend
-  type: NodePort
+    app: goldcar-alpakka-kafka-microservice
+  ports:
+  - protocol: TCP
+    port: 8080
+    nodePort: 32000
 
-$ kubectl create -f kube/deployment.yaml
+$ kubectl create -f kube/goldcarmicroservice.yaml
+deployment "goldcar-alpakka-kafka-microservice" created
+service "goldcar-alpakka-kafka-microservice-service" created
+
 ```
 
 ![Alt text](images/deployinkubernetes.png "Deploy the appication")
@@ -492,20 +518,36 @@ $ kubectl create -f kube/deployment.yaml
 ![Alt text](images/checkkubernetes.png "Check the status of the deployed appication")
 
 
-You can visit the application at http://minkube-ip:32000
-
+You can visit the application at http://your-minkube-ip:32000
 
 ![Alt text](images/verifydeployedapplicationinkube.png "Check the appication")
 
-It's not working. Seems to be crashing all the time:
 
-![Alt text](images/fallosenaplicacion.png "The application is crashing")
-
-
-Let's explore the application in the Kubernetes User interface:
+The Producer can be called like this:
 
 
-![Alt text](images/kubernetesui.png "Kubernetes user interface")
+```bash
+curl http://192.168.99.100:32000/goldcar-alpakka-producer-microservice/topico1/30
+{}
+```
+
+The Consumer can be called like this example:
+
+```bash
+curl http://192.168.99.100:32000/goldcar-alpakka-consumer-microservice/topico1/topico2
+{}
+```
+
+
+
+
+
+
+
+
+
+
+
 
 
 
