@@ -301,16 +301,6 @@ View nodes metrics:
 
 ```bash
 $ kubectl get --raw "/apis/metrics.k8s.io/v1beta1/nodes" | jq .
-
-{
-  "kind": "NodeMetricsList",
-  "apiVersion": "metrics.k8s.io/v1beta1",
-  "metadata": {
-    "selfLink": "/apis/metrics.k8s.io/v1beta1/nodes"
-  },
-  "items": []
-}
-
 ```
 
 
@@ -321,18 +311,7 @@ View pods metrics:
 
 ```bash
 $ kubectl get --raw "/apis/metrics.k8s.io/v1beta1/pods" | jq .
-
-{
-  "kind": "PodMetricsList",
-  "apiVersion": "metrics.k8s.io/v1beta1",
-  "metadata": {
-    "selfLink": "/apis/metrics.k8s.io/v1beta1/pods"
-  },
-  "items": []
-}
-
 ```
-
 
 ![Alt text](images/podsmetrics.png "Pods metrics")
 
@@ -574,6 +553,57 @@ kafka-0   1/1       Running   0          1m
 ![Alt text](images/kafkalogs.png "Kafka logs")
 
 
+***Get Kafka and Zookeeper metrics***
+
+```bash
+$ kubectl get --raw "/apis/metrics.k8s.io/v1beta1/namespaces/default/pods/kafka-0" | jq .
+{
+  "kind": "PodMetrics",
+  "apiVersion": "metrics.k8s.io/v1beta1",
+  "metadata": {
+    "name": "kafka-0",
+    "namespace": "default",
+    "selfLink": "/apis/metrics.k8s.io/v1beta1/namespaces/default/pods/kafka-0",
+    "creationTimestamp": "2018-08-22T06:20:22Z"
+  },
+  "timestamp": "2018-08-22T06:20:00Z",
+  "window": "1m0s",
+  "containers": [
+    {
+      "name": "k8skafka",
+      "usage": {
+        "cpu": "123m",
+        "memory": "504928Ki"
+      }
+    }
+  ]
+}
+
+$ kubectl get --raw "/apis/metrics.k8s.io/v1beta1/namespaces/default/pods/zk-0" | jq .
+{
+  "kind": "PodMetrics",
+  "apiVersion": "metrics.k8s.io/v1beta1",
+  "metadata": {
+    "name": "zk-0",
+    "namespace": "default",
+    "selfLink": "/apis/metrics.k8s.io/v1beta1/namespaces/default/pods/zk-0",
+    "creationTimestamp": "2018-08-22T06:20:15Z"
+  },
+  "timestamp": "2018-08-22T06:20:00Z",
+  "window": "1m0s",
+  "containers": [
+    {
+      "name": "kubernetes-zookeeper",
+      "usage": {
+        "cpu": "3m",
+        "memory": "62968Ki"
+      }
+    }
+  ]
+}
+
+```
+
 ***Test the deployed Kafka application***
 
 Create a topic called "test":
@@ -634,6 +664,7 @@ otro mensaje
 
 ![Alt text](images/testingkafka.png "Testing Kafka")
 
+
 So the test is ok, we have Kafka up and running in Kubernetes!
 
 ### Deploying the microservice application
@@ -685,27 +716,129 @@ service "goldcar-alpakka-kafka-microservice-service" created
 
 ![Alt text](images/checkkubernetes.png "Check the status of the deployed appication")
 
+![Alt text](images/goldcar-alpakka-kafka-microservice-deployed.png "Application deployed")
+
+![Alt text](images/goldcar-alpakka-kafka-microservice-logs.png "Application logs")
+
 
 You can visit the application at http://your-minkube-ip:32000
 
 ![Alt text](images/verifydeployedapplicationinkube.png "Check the appication")
 
 
-The Producer can be called like this:
+The Producer microservice can be tested called like in this example:
 
 
 ```bash
-curl http://192.168.99.100:32000/goldcar-alpakka-producer-microservice/topico1/30
+curl http://192.168.99.100:32000/goldcar-alpakka-producer-microservice/test/30
 {}
 ```
 
-The Consumer can be called like this example:
+We can see from our kafka-console-consumer.sh window that the messages
+have been added to the topic:
 
 ```bash
-curl http://192.168.99.100:32000/goldcar-alpakka-consumer-microservice/topico1/topico2
+arturotarin@QOSMIO-X70B:~/Documents/Mistral/2018-08-13 OTD-129. PoC Reactive Microservices communication through Kafka topics using Alpakka/goldcar-alpakka-kafka-microservice
+$ kubectl run -ti --image=gcr.io/google_containers/kubernetes-kafka:1.0-10.2.1 \
+     consume --restart=Never --rm -- \
+     kafka-console-consumer.sh --topic test \
+     --bootstrap-server kafka-0.kafka-hs.default.svc.cluster.local:9093 --from-beginning
+                                                      a
+a
+un mensaje
+otro mensaje
+1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+12
+13
+14
+15
+16
+17
+18
+19
+20
+21
+22
+23
+24
+25
+26
+27
+28
+29
+30
+```
+
+The application logs also is registering the log production:
+
+![Alt text](images/kafkatestlogs.png "Check Kafka logs")
+
+We also can test the Consumer microservice, calling it like in this example:
+
+
+First, create a new topic called "test1":
+
+```bash
+
+$ kubectl run -ti --image=gcr.io/google_containers/kubernetes-kafka:1.0-10.2.1 \
+    createtopic --restart=Never --rm -- \
+    kafka-topics.sh --create --topic test1 \
+    --zookeeper zk-cs.default.svc.cluster.local:2181 \
+    --partitions 1 \
+    --replication-factor 1
+
+Created topic "test1".
+
+$ kubectl run -ti --image=gcr.io/google_containers/kubernetes-kafka:1.0-10.2.1 \
+    listtopics --restart=Never --rm -- \
+    kafka-topics.sh --list \
+    --zookeeper zk-cs.default.svc.cluster.local:2181
+
+__consumer_offsets
+test
+test1
+```
+
+Next, issue our Consumer microservice url to replicate messages
+from the "test" topic to the "test1" topic:
+
+```bash
+curl http://192.168.99.100:32000/goldcar-alpakka-consumer-microservice/test/test1
 {}
 ```
 
+Now we can see that our consumer Alpakka reactive microservice has replicated the messages:
+
+```bash
+arturotarin@QOSMIO-X70B:~/Documents/Mistral/2018-08-13 OTD-129. PoC Reactive Microservices communication through Kafka topics using Alpakka/goldcar-alpakka-kafka-microservice
+$ kubectl run -ti --image=gcr.io/google_containers/kubernetes-kafka:1.0-10.2.1 \
+     consumetest1 --restart=Never --rm -- \
+     kafka-console-consumer.sh --topic test1 \
+     --bootstrap-server kafka-0.kafka-hs.default.svc.cluster.local:9093 --from-beginning
+
+```
+
+WE SHOULD SEE MESSAGES, BUT THERE AREN'T ANY. CHECK THIS TO SEE WHAT IT HAPPENS !!!!!!!!!!!
+
+
+ONCE SOLVED THIS ISSUE WE CAN KEEP GOING FROM HERE.
+---------------------------------------------------
+---------------------------------------------------
+---------------------------------------------------
+---------------------------------------------------
+---------------------------------------------------
+---------------------------------------------------
+---------------------------------------------------
 
 
 
@@ -716,12 +849,8 @@ curl http://192.168.99.100:32000/goldcar-alpakka-consumer-microservice/topico1/t
 
 
 
-
-
-
-You can send messages to the queue by visiting http://<minkube ip>:32000/submit
-
-You should be able to see the number of pending messages from http://<minkube ip>:32000/metrics and from the custom metrics endpoint:
+You should be able to see the number of pending messages from http://<minkube ip>:32000/metrics
+and from the custom metrics endpoint:
 
 ```bash
 kubectl get --raw "/apis/custom.metrics.k8s.io/v1beta1/namespaces/default/pods/*/messages" | jq .

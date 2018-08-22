@@ -27,7 +27,10 @@ abstract class KafkaAlpakkaProducer {
     final ProducerSettings<String, String> producerSettings =
             ProducerSettings
                     .create(config, new StringSerializer(), new StringSerializer())
-                    .withBootstrapServers("localhost:9092");
+                    //.withBootstrapServers("localhost:9092");
+                    // HARDCODED TO THE KUBERNETES KAFKA STANDALONE DEPLOYMENT!!!
+                    // NEEDS TO BE CONFIGURABLE.
+                    .withBootstrapServers("kafka-0.kafka-hs.default.svc.cluster.local:9093");
     // #settings
     final KafkaProducer<String, String> kafkaProducer =
             producerSettings.createKafkaProducer();

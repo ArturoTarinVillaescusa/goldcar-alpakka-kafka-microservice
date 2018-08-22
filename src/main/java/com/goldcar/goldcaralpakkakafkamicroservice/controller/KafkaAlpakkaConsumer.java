@@ -53,7 +53,10 @@ abstract class KafkaAlpakkaConsumer {
   final Config config = system.settings().config().getConfig("akka.kafka.consumer");
   final ConsumerSettings<String, byte[]> consumerSettings =
       ConsumerSettings.create(config, new StringDeserializer(), new ByteArrayDeserializer())
-          .withBootstrapServers("localhost:9092")
+          //.withBootstrapServers("localhost:9092");
+          // HARDCODED TO THE KUBERNETES KAFKA STANDALONE DEPLOYMENT!!!
+          // NEEDS TO BE CONFIGURABLE.
+          .withBootstrapServers("kafka-0.kafka-hs.default.svc.cluster.local:9093")
           .withGroupId("group1")
           .withProperty(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");
   // #settings
