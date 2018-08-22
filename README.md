@@ -155,10 +155,20 @@ You should start minikube with at least 4GB of RAM:
 
 ```bash
 minikube start \
-  --memory 4096 \
+  --memory 8192 \
   --extra-config=controller-manager.horizontal-pod-autoscaler-upscale-delay=1m \
   --extra-config=controller-manager.horizontal-pod-autoscaler-downscale-delay=2m \
   --extra-config=controller-manager.horizontal-pod-autoscaler-sync-period=10s
+Starting local Kubernetes v1.10.0 cluster...
+Starting VM...
+Getting VM IP address...
+Moving files into cluster...
+Setting up certs...
+Connecting to cluster...
+Setting up kubeconfig...
+Starting cluster components...
+Kubectl is now configured to use the cluster.
+Loading cached images from config file.
 ```
 
 ![Alt text](images/startminikube.png "Start Minikube")
@@ -271,7 +281,16 @@ object that is created by using the /apis/rbac.authorization.k8s.io endpoints.
 Deploy the Metrics Server in the `kube-system` namespace:
 
 ```bash
-kubectl create -f monitoring/metrics-server
+$ kubectl create -f monitoring/metrics-server
+
+clusterrolebinding "metrics-server:system:auth-delegator" created
+rolebinding "metrics-server-auth-reader" created
+apiservice "v1beta1.metrics.k8s.io" created
+serviceaccount "metrics-server" created
+deployment "metrics-server" created
+service "metrics-server" created
+clusterrole "system:metrics-server" created
+clusterrolebinding "system:metrics-server" created
 ```
 
 ![Alt text](images/metrics-server.png "Create metrics server")
@@ -281,7 +300,17 @@ After one minute the metric-server starts reporting CPU and memory usage for nod
 View nodes metrics:
 
 ```bash
-kubectl get --raw "/apis/metrics.k8s.io/v1beta1/nodes" | jq .
+$ kubectl get --raw "/apis/metrics.k8s.io/v1beta1/nodes" | jq .
+
+{
+  "kind": "NodeMetricsList",
+  "apiVersion": "metrics.k8s.io/v1beta1",
+  "metadata": {
+    "selfLink": "/apis/metrics.k8s.io/v1beta1/nodes"
+  },
+  "items": []
+}
+
 ```
 
 
@@ -291,7 +320,17 @@ kubectl get --raw "/apis/metrics.k8s.io/v1beta1/nodes" | jq .
 View pods metrics:
 
 ```bash
-kubectl get --raw "/apis/metrics.k8s.io/v1beta1/pods" | jq .
+$ kubectl get --raw "/apis/metrics.k8s.io/v1beta1/pods" | jq .
+
+{
+  "kind": "PodMetricsList",
+  "apiVersion": "metrics.k8s.io/v1beta1",
+  "metadata": {
+    "selfLink": "/apis/metrics.k8s.io/v1beta1/pods"
+  },
+  "items": []
+}
+
 ```
 
 
@@ -301,19 +340,43 @@ kubectl get --raw "/apis/metrics.k8s.io/v1beta1/pods" | jq .
 Create the monitoring namespace:
 
 ```bash
-kubectl create -f monitoring/namespaces.yaml
+$ kubectl create -f monitoring/namespaces.yaml
+
+namespace "monitoring" created
+
 ```
 
 Deploy Prometheus v2 in the monitoring namespace:
 
 ```bash
-kubectl create -f monitoring/prometheus
+$ kubectl create -f monitoring/prometheus
+
+configmap "prometheus-config" created
+deployment "prometheus" created
+clusterrole "prometheus" created
+serviceaccount "prometheus" created
+clusterrolebinding "prometheus" created
+service "prometheus" created
+
 ```
 
 Deploy the Prometheus custom metrics API adapter:
 
 ```bash
-kubectl create -f monitoring/custom-metrics-api
+$ kubectl create -f monitoring/custom-metrics-api
+
+secret "cm-adapter-serving-certs" created
+clusterrolebinding "custom-metrics:system:auth-delegator" created
+rolebinding "custom-metrics-auth-reader" created
+deployment "custom-metrics-apiserver" created
+clusterrolebinding "custom-metrics-resource-reader" created
+serviceaccount "custom-metrics-apiserver" created
+service "custom-metrics-apiserver" created
+apiservice "v1beta1.custom.metrics.k8s.io" created
+clusterrole "custom-metrics-server-resources" created
+clusterrole "custom-metrics-resource-reader" created
+clusterrolebinding "hpa-controller-custom-metrics" created
+
 ```
 
 ![Alt text](images/monitoring.png "Create monitoring components")
@@ -467,6 +530,111 @@ Tomcat is accessible using Minikube IP (mine is 192.168.99.100 VirtualBox's IP) 
 
 ![Alt text](images/minikubetomcat.png "Tomcat deployed in Minikube")
 
+### Deploying Zookeeper and Kafka in Kubernetes
+
+Our microservice is still not using Spring Cloud Config, and the connection to Kafka is hardcoded with "localhost:9092"
+In order to make our initial tests work we need to run Kubernetes and Kafka in this environment.
+
+The [implementation described in this link is handy](https://github.com/kow3ns/kubernetes-kafka/tree/master/manifests), so
+we are going to take advantage for our project, so thanks in advance to mr. Kenneth Owens for his work!
+
+***Create a standalone Zookeeper application***
+
+```bash
+$ kubectl create -f kube/zookeeper.yaml
+service "zk-hs" created
+service "zk-cs" created
+statefulset "zk" created
+
+$ kubectl get po -lapp=zk
+NAME      READY     STATUS    RESTARTS   AGE
+zk-0      1/1       Running   0          1m
+```
+
+![Alt text](images/zookeeper.png "Zookeeper deployed in Minikube")
+
+![Alt text](images/zookeeperlogs.png "Zookeeper logs")
+
+***Create a standalone Kafka application***
+
+```bash
+$ kubectl create -f kube/kafka.yaml
+service "kafka-hs" created
+poddisruptionbudget "kafka-pdb" created
+statefulset "kafka" created
+
+$ kubectl get pods -lapp=kafka
+NAME      READY     STATUS    RESTARTS   AGE
+kafka-0   1/1       Running   0          1m
+
+```
+
+![Alt text](images/kafka.png "Kafka deployed in Minikube")
+
+![Alt text](images/kafkalogs.png "Kafka logs")
+
+
+***Test the deployed Kafka application***
+
+Create a topic called "test":
+
+```bash
+
+$ kubectl run -ti --image=gcr.io/google_containers/kubernetes-kafka:1.0-10.2.1 \
+    createtopic --restart=Never --rm -- \
+    kafka-topics.sh --create --topic test \
+    --zookeeper zk-cs.default.svc.cluster.local:2181 \
+    --partitions 1 \
+    --replication-factor 1
+
+Created topic "test".
+
+```
+
+Run kafka-console-consumer in one terminal:
+
+
+```bash
+$ kubectl run -ti --image=gcr.io/google_containers/kubernetes-kafka:1.0-10.2.1 \
+    consume --restart=Never --rm -- \
+    kafka-console-consumer.sh --topic test \
+    --bootstrap-server kafka-0.kafka-hs.default.svc.cluster.local:9093
+
+```
+
+Run kafka-console-producer in other terminal:
+
+```bash
+$ kubectl run -ti --image=gcr.io/google_containers/kubernetes-kafka:1.0-10.2.1 \
+    produce --restart=Never --rm -- \
+    kafka-console-producer.sh --topic test \
+    --broker-list kafka-0.kafka-hs.default.svc.cluster.local:9093
+
+a
+a
+un mensaje
+otro mensaje
+```
+
+We see in kafka-console-consumer terminal that it starts consuming the produced messages:
+
+
+```bash
+$ kubectl run -ti --image=gcr.io/google_containers/kubernetes-kafka:1.0-10.2.1 \
+    consume --restart=Never --rm -- \
+    kafka-console-consumer.sh --topic test \
+    --bootstrap-server kafka-0.kafka-hs.default.svc.cluster.local:9093
+
+a
+a
+un mensaje
+otro mensaje
+
+```
+
+![Alt text](images/testingkafka.png "Testing Kafka")
+
+So the test is ok, we have Kafka up and running in Kubernetes!
 
 ### Deploying the microservice application
 
