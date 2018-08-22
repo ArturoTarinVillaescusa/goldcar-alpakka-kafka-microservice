@@ -1094,7 +1094,7 @@ goldcar-alpakka-kafka-microservice-hpa   Deployment/goldcar-alpakka-kafka-micros
 
 And we can see the application is scaling up and down based in the workload thresholds that we have stablished:
 
-![Alt text](images/hpa.png "HPA is autoscaling")
+![Alt text](images/hpaisautoscaling.png "HPA is autoscaling")
 
 
 
