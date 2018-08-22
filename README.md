@@ -867,7 +867,92 @@ $ curl http://192.168.99.100:32000/metrics | jq .
 }
 ```
 
-ONCE SOLVED THIS ISSUE WE CAN KEEP GOING FROM HERE.
+
+We need to develop some metrics endpoint to check the threshold values later. We can get advantage of this also:
+
+
+```bash
+$ kubectl get --raw "/apis/metrics.k8s.io/v1beta1/namespaces/default/pods/goldcar-alpakka-kafka-microservice-dc8dbcb9f-df8mw" | jq .
+{
+  "kind": "PodMetrics",
+  "apiVersion": "metrics.k8s.io/v1beta1",
+  "metadata": {
+    "name": "goldcar-alpakka-kafka-microservice-dc8dbcb9f-df8mw",
+    "namespace": "default",
+    "selfLink": "/apis/metrics.k8s.io/v1beta1/namespaces/default/pods/goldcar-alpakka-kafka-microservice-dc8dbcb9f-df8mw",
+    "creationTimestamp": "2018-08-22T07:58:47Z"
+  },
+  "timestamp": "2018-08-22T07:58:00Z",
+  "window": "1m0s",
+  "containers": [
+    {
+      "name": "goldcar-alpakka-kafka-microservice",
+      "usage": {
+        "cpu": "6m",
+        "memory": "280108Ki"
+      }
+    }
+  ]
+}
+```
+
+```bash
+$ kubectl get --raw "/apis/metrics.k8s.io/v1beta1/namespaces/default/pods/goldcar-alpakka-kafka-microservice-dc8dbcb9f-76fq2" | jq .
+{
+  "kind": "PodMetrics",
+  "apiVersion": "metrics.k8s.io/v1beta1",
+  "metadata": {
+    "name": "goldcar-alpakka-kafka-microservice-dc8dbcb9f-76fq2",
+    "namespace": "default",
+    "selfLink": "/apis/metrics.k8s.io/v1beta1/namespaces/default/pods/goldcar-alpakka-kafka-microservice-dc8dbcb9f-76fq2",
+    "creationTimestamp": "2018-08-22T07:58:27Z"
+  },
+  "timestamp": "2018-08-22T07:58:00Z",
+  "window": "1m0s",
+  "containers": [
+    {
+      "name": "goldcar-alpakka-kafka-microservice",
+      "usage": {
+        "cpu": "34m",
+        "memory": "297600Ki"
+      }
+    }
+  ]
+}
+
+```
+
+```bash
+$ kubectl get --raw "/apis/metrics.k8s.io/v1beta1/namespaces/default/pods/goldcar-alpakka-kafka-microservice-dc8dbcb9f-ks4dn" | jq .
+
+{
+  "kind": "PodMetrics",
+  "apiVersion": "metrics.k8s.io/v1beta1",
+  "metadata": {
+    "name": "goldcar-alpakka-kafka-microservice-dc8dbcb9f-ks4dn",
+    "namespace": "default",
+    "selfLink": "/apis/metrics.k8s.io/v1beta1/namespaces/default/pods/goldcar-alpakka-kafka-microservice-dc8dbcb9f-ks4dn",
+    "creationTimestamp": "2018-08-22T07:58:09Z"
+  },
+  "timestamp": "2018-08-22T07:58:00Z",
+  "window": "1m0s",
+  "containers": [
+    {
+      "name": "goldcar-alpakka-kafka-microservice",
+      "usage": {
+        "cpu": "6m",
+        "memory": "283468Ki"
+      }
+    }
+  ]
+}
+
+```
+
+
+LET'S FIGURE OUT HOW CAN WE GET ADVANTAGE OF THESE PIECES AND
+ONCE SOLVED THIS PUZZLE WE CAN KEEP GOING FROM HERE.
+---------------------------------------------------
 ---------------------------------------------------
 ---------------------------------------------------
 ---------------------------------------------------
