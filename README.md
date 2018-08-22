@@ -966,20 +966,6 @@ ONCE SOLVED THIS PUZZLE WE CAN KEEP GOING FROM HERE.
 ---------------------------------------------------
 ---------------------------------------------------
 ---------------------------------------------------
----------------------------------------------------
----------------------------------------------------
----------------------------------------------------
----------------------------------------------------
----------------------------------------------------
-
-
-
-
-
-
-
-
-
 
 You should be able to see the number of pending messages from http://<minkube ip>:32000/metrics
 and from the custom metrics endpoint:
@@ -987,36 +973,130 @@ and from the custom metrics endpoint:
 ```bash
 kubectl get --raw "/apis/custom.metrics.k8s.io/v1beta1/namespaces/default/pods/*/messages" | jq .
 ```
+---------------------------------------------------
+---------------------------------------------------
+---------------------------------------------------
+---------------------------------------------------
+---------------------------------------------------
+
 
 ### Autoscaling workers
 
-You can scale the application in proportion to the number of messages in the queue with the Horizontal Pod Autoscaler. You can deploy the HPA with:
+We have deployed our application initially with 3 pods:
 
 ```bash
-kubectl create -f kube/hpa.yaml
+$ kubectl get pods | grep goldcar
+goldcar-alpakka-kafka-microservice-dc8dbcb9f-2sxw2   1/1       Running   0          16m
+goldcar-alpakka-kafka-microservice-dc8dbcb9f-bqz9d   1/1       Running   0          16m
+goldcar-alpakka-kafka-microservice-dc8dbcb9f-mhf2d   1/1       Running   0          16m
+
+```
+
+By the means of HPA, we can make Kubernetes to autoscale our application based in the
+the memory and CPU consumption average (and the number of messages in queue when I solve it)
+
+Let's do this in in our example with:
+
+```bash
+$ cat kube/goldcarmicroservice-hpa.yaml
+---
+apiVersion: autoscaling/v2beta1
+kind: HorizontalPodAutoscaler
+metadata:
+  name: goldcar-alpakka-kafka-microservice-hpa
+spec:
+  scaleTargetRef:
+    apiVersion: extensions/v1beta1
+    kind: Deployment
+    name: goldcar-alpakka-kafka-microservice
+  minReplicas: 1
+  maxReplicas: 10
+  targetCPUUtilizationPercentage: 40
+  metrics:
+  - type: Resource
+    resource:
+      name: cpu
+      targetAverageUtilization: 40
+  - type: Resource
+    resource:
+      name: memory
+      targetAverageValue: 200Mi
+# Still working on it in
+# @RequestMapping(value="/metrics"
+#  metrics:
+#  - type: Pods
+#    pods:
+#      metricName: messages
+#      targetAverageValue: 10
+# Meanwhile let's go for the easy way, putting the thresholds in
+# targetCPUUtilizationPercentage and targetMemoryUtilizationPercentagea
+
+$ kubectl create -f kube/goldcarmicroservice-hpa.yaml
+horizontalpodautoscaler "goldcar-alpakka-kafka-microservice-hpa" created
 ```
 
 You can send more traffic to the application with:
 
 ```bash
-while true; do sleep 0.5; curl -s http://<minikube ip>:32000/goldcar-alpakka-producer-microservice/test/30; done
+while true; do sleep 0.5; curl -s http://192.168.99.100:32000/goldcar-alpakka-producer-microservice/test/300000; done
 ```
 
-When the application can't cope with the number of icoming messages, the autoscaler increases the number of pods only every 3 minutes.
-
-You may need to wait three minutes before you can see more pods joining the deployment with:
+We can check the application memory and cpu consumption with this command:
 
 ```bash
-kubectl get pods
+{
+  "kind": "PodMetrics",
+  "apiVersion": "metrics.k8s.io/v1beta1",
+  "metadata": {
+    "name": "goldcar-alpakka-kafka-microservice-dc8dbcb9f-mhf2d",
+    "namespace": "default",
+    "selfLink": "/apis/metrics.k8s.io/v1beta1/namespaces/default/pods/goldcar-alpakka-kafka-microservice-dc8dbcb9f-mhf2d",
+    "creationTimestamp": "2018-08-22T11:34:55Z"
+  },
+  "timestamp": "2018-08-22T11:34:00Z",
+  "window": "1m0s",
+  "containers": [
+    {
+      "name": "goldcar-alpakka-kafka-microservice",
+      "usage": {
+        "cpu": "227m",
+        "memory": "312440Ki"
+      }
+    }
+  ]
+}
 ```
 
-The autoscaler will remove pods from the deployment every 5 minutes.
 
-You can inspect the event and triggers in the HPA with:
+When the application reaches the stablished memory and cpu consumption thresholds, the autoscaler increases the number
+of pods.
+
+We may need to wait three minutes before you can see more pods joining the deployment with:
 
 ```bash
-kubectl get hpa spring-boot-hpa
+$ kubectl get pods | grep goldcar
+goldcar-alpakka-kafka-microservice-dc8dbcb9f-2sxw2   1/1       Running   0          32m
+goldcar-alpakka-kafka-microservice-dc8dbcb9f-bqz9d   1/1       Running   0          32m
+goldcar-alpakka-kafka-microservice-dc8dbcb9f-mhf2d   1/1       Running   0          32m
+
 ```
+
+If the memory and cpu consumtion keeps under the stablished thresholds during a period of 5 minutes,
+then the autoscaler will remove pods.
+
+We can inspect the event and triggers in the HPA with:
+
+```bash
+$ kubectl get hpa goldcar-alpakka-kafka-microservice-hpa
+NAME                                     REFERENCE                                       TARGETS                              MINPODS   MAXPODS   REPLICAS   AGE
+goldcar-alpakka-kafka-microservice-hpa   Deployment/goldcar-alpakka-kafka-microservice   <unknown> / 200Mi, <unknown> / 40%   1         10        3          18m
+```
+
+And we can see the application is scaling up and down based in the workload thresholds that we have stablished:
+
+![Alt text](images/hpa.png "HPA is autoscaling")
+
+
 
 ### Appendix
 

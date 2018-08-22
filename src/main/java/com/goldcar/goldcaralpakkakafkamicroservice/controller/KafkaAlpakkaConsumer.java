@@ -282,8 +282,6 @@ class KafkaAlpakkaConsumerToProducerFlexiFlow extends KafkaAlpakkaConsumer {
 
       return true;
   }
-
-
 }
 
 

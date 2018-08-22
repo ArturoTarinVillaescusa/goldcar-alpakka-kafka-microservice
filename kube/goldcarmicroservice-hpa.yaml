@@ -1,0 +1,31 @@
+---
+apiVersion: autoscaling/v2beta1
+kind: HorizontalPodAutoscaler
+metadata:
+  name: goldcar-alpakka-kafka-microservice-hpa
+spec:
+  scaleTargetRef:
+    apiVersion: extensions/v1beta1
+    kind: Deployment
+    name: goldcar-alpakka-kafka-microservice
+  minReplicas: 1
+  maxReplicas: 10
+  targetCPUUtilizationPercentage: 40
+  metrics:
+  - type: Resource
+    resource:
+      name: cpu
+      targetAverageUtilization: 40
+  - type: Resource
+    resource:
+      name: memory
+      targetAverageValue: 200Mi
+# Still working on it in
+# @RequestMapping(value="/metrics"
+#  metrics:
+#  - type: Pods
+#    pods:
+#      metricName: messages
+#      targetAverageValue: 10
+# Meanwhile let's go for the easy way, putting the thresholds in
+# targetCPUUtilizationPercentage and targetMemoryUtilizationPercentage

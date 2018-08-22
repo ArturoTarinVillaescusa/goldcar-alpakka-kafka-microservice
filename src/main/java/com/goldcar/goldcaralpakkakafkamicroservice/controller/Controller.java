@@ -34,7 +34,8 @@ public class Controller {
 //    @ResponseBody
 //    @RequestMapping(value="/metrics", produces="text/plain")
 //    public String metrics() {
-//        int totalMessages = queueService.pendingJobs(queueName);
+//        int totalMessages = new KafkaAlpakkaConsumerToProducerFlexiFlow()
+//                .getKafkaMetrics(topico);
 //        return "# HELP messages Number of messages in the queueService\n"
 //                + "# TYPE messages gauge\n"
 //                + "messages " + totalMessages;
