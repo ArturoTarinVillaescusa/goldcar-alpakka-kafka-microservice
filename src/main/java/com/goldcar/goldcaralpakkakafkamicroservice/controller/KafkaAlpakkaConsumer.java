@@ -70,8 +70,10 @@ abstract class KafkaAlpakkaConsumer {
 
   protected final ProducerSettings<String, byte[]> producerSettings =
       ProducerSettings.create(system, new StringSerializer(), new ByteArraySerializer())
-          .withBootstrapServers("localhost:9092");
-
+              //.withBootstrapServers("localhost:9092");
+              // HARDCODED TO THE KUBERNETES KAFKA STANDALONE DEPLOYMENT!!!
+              // NEEDS TO BE CONFIGURABLE.
+              .withBootstrapServers("kafka-0.kafka-hs.default.svc.cluster.local:9093");
 
 }
 

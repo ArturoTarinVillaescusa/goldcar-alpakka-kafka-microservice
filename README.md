@@ -604,7 +604,7 @@ $ kubectl get --raw "/apis/metrics.k8s.io/v1beta1/namespaces/default/pods/zk-0" 
 
 ```
 
-***Test the deployed Kafka application***
+***Test Kafka standalone application that you've deployed in Kubernetes***
 
 Create a topic called "test":
 
@@ -705,7 +705,7 @@ spec:
     port: 8080
     nodePort: 32000
 
-$ kubectl create -f kube/goldcarmicroservice.yaml
+    $ kubectl create -f kube/goldcarmicroservice.yaml
 deployment "goldcar-alpakka-kafka-microservice" created
 service "goldcar-alpakka-kafka-microservice-service" created
 
@@ -740,13 +740,9 @@ have been added to the topic:
 ```bash
 arturotarin@QOSMIO-X70B:~/Documents/Mistral/2018-08-13 OTD-129. PoC Reactive Microservices communication through Kafka topics using Alpakka/goldcar-alpakka-kafka-microservice
 $ kubectl run -ti --image=gcr.io/google_containers/kubernetes-kafka:1.0-10.2.1 \
-     consume --restart=Never --rm -- \
+     consumetesttopic --restart=Never --rm -- \
      kafka-console-consumer.sh --topic test \
-     --bootstrap-server kafka-0.kafka-hs.default.svc.cluster.local:9093 --from-beginning
-                                                      a
-a
-un mensaje
-otro mensaje
+     --bootstrap-server kafka-0.kafka-hs.default.svc.cluster.local:9093
 1
 2
 3
@@ -822,14 +818,54 @@ Now we can see that our consumer Alpakka reactive microservice has replicated th
 ```bash
 arturotarin@QOSMIO-X70B:~/Documents/Mistral/2018-08-13 OTD-129. PoC Reactive Microservices communication through Kafka topics using Alpakka/goldcar-alpakka-kafka-microservice
 $ kubectl run -ti --image=gcr.io/google_containers/kubernetes-kafka:1.0-10.2.1 \
-     consumetest1 --restart=Never --rm -- \
+     consumetest1topic --restart=Never --rm -- \
      kafka-console-consumer.sh --topic test1 \
      --bootstrap-server kafka-0.kafka-hs.default.svc.cluster.local:9093 --from-beginning
-
+1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+12
+13
+14
+15
+16
+17
+18
+19
+20
+21
+22
+23
+24
+25
+26
+27
+28
+29
+30
 ```
 
-WE SHOULD SEE MESSAGES, BUT THERE AREN'T ANY. CHECK THIS TO SEE WHAT IT HAPPENS !!!!!!!!!!!
+WE SHOULD BE ABLE TO SEE THE NUMBER OF PENDING MESSAGES FROM HTTP://<MINUKUBE_IP>:32000/METRICS
+BUT THERE AREN'T ANY. CHECK THIS TO SEE WHAT IT HAPPENS !!!!!!!!!!!
 
+```bash
+$ curl http://192.168.99.100:32000/metrics | jq .
+{
+  "timestamp": "2018-08-22T07:38:42.081+0000",
+  "status": 404,
+  "error": "Not Found",
+  "message": "No message available",
+  "path": "/metrics"
+}
+```
 
 ONCE SOLVED THIS ISSUE WE CAN KEEP GOING FROM HERE.
 ---------------------------------------------------
