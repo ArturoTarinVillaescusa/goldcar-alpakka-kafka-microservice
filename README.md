@@ -903,7 +903,7 @@ kubectl create -f kube/hpa.yaml
 You can send more traffic to the application with:
 
 ```bash
-while true; do sleep 0.5; curl -s http://<minikube ip>:32000/submit; done
+while true; do sleep 0.5; curl -s http://<minikube ip>:32000/goldcar-alpakka-producer-microservice/test/30; done
 ```
 
 When the application can't cope with the number of icoming messages, the autoscaler increases the number of pods only every 3 minutes.
