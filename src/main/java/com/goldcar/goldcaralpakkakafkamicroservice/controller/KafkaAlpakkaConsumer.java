@@ -18,9 +18,11 @@ import akka.kafka.javadsl.Producer;
 import akka.stream.ActorMaterializer;
 import akka.stream.Materializer;
 import akka.stream.javadsl.*;
+import akka.stream.javadsl.Flow;
 import com.typesafe.config.Config;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
+import org.apache.kafka.clients.consumer.KafkaConsumer;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.common.Metric;
 import org.apache.kafka.common.MetricName;
@@ -32,10 +34,8 @@ import org.apache.kafka.common.serialization.StringSerializer;
 
 import java.time.temporal.ChronoUnit;
 import java.util.Map;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.CompletionStage;
-import java.util.concurrent.Executor;
-import java.util.concurrent.Executors;
+import java.util.Properties;
+import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicLong;
 
 abstract class KafkaAlpakkaConsumer {
@@ -53,7 +53,7 @@ abstract class KafkaAlpakkaConsumer {
   final Config config = system.settings().config().getConfig("akka.kafka.consumer");
   final ConsumerSettings<String, byte[]> consumerSettings =
       ConsumerSettings.create(config, new StringDeserializer(), new ByteArrayDeserializer())
-          //.withBootstrapServers("localhost:9092");
+          //.withBootstrapServers("localhost:9092")
           // HARDCODED TO THE KUBERNETES KAFKA STANDALONE DEPLOYMENT!!!
           // NEEDS TO BE CONFIGURABLE.
           .withBootstrapServers("kafka-0.kafka-hs.default.svc.cluster.local:9093")
@@ -265,7 +265,28 @@ class KafkaAlpakkaConsumerToProducerFlexiFlow extends KafkaAlpakkaConsumer {
               .run(materializer);
       // #consumerToProducerFlow
   }
+
+  public boolean kafkaIsUp() {
+      try {
+          Properties props = new Properties();
+          props.put("bootstrap.servers", consumerSettings.getProperty("bootstrap.servers")); // "kafka-0.kafka-hs.default.svc.cluster.local:9093"
+          props.put("group.id",consumerSettings.getProperty("group.id")); // "group1"
+          props.put("key.deserializer", "org.apache.kafka.common.serialization.StringDeserializer");
+          props.put("value.deserializer", "org.apache.kafka.common.serialization.StringDeserializer");
+          KafkaConsumer simpleConsumer = new KafkaConsumer(props);
+          simpleConsumer.listTopics();
+      } catch (Exception e) {
+        return false;
+      }
+
+
+      return true;
+  }
+
+
 }
+
+
 
 // Connect a KafkaAlpakkaConsumer to KafkaAlpakkaProducer, and commit in batches
 class KafkaAlpakkaConsumerToProducerWithBatchCommits extends KafkaAlpakkaConsumer {
