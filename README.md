@@ -690,7 +690,18 @@ spec:
         image: goldcar-alpakka-kafka-microservice
         imagePullPolicy: IfNotPresent
         ports:
-        - containerPort: 8080
+          - containerPort: 8080
+# Still not ready, it is failing in Kubernetes with the message and need further studying
+# Liveness probe failed: Get http://172.17.0.9:8080/health: dial tcp 172.17.0.9:8080: getsockopt: connection refused
+#        livenessProbe:
+#          initialDelaySeconds: 5
+#          periodSeconds: 5
+#          httpGet:
+#            path: /health
+#            port: 8080
+#        resources:
+#          limits:
+#            memory: 512Mi
 ---
 apiVersion: v1
 kind: Service
@@ -705,7 +716,7 @@ spec:
     port: 8080
     nodePort: 32000
 
-    $ kubectl create -f kube/goldcarmicroservice.yaml
+$ kubectl create -f kube/goldcarmicroservice.yaml
 deployment "goldcar-alpakka-kafka-microservice" created
 service "goldcar-alpakka-kafka-microservice-service" created
 
