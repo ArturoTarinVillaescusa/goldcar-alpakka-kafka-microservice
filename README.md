@@ -137,6 +137,22 @@ Now, any other microservice can consume the messages produced into "topicodestin
 
 ![Alt text](images/chainedconsumers.png "1 producer and multiple consumers")
 
+### Example 3: Testing a transaction that is involving a simple microservice
+
+![Alt text](images/transaction1microservice.png "Transaction in 1 microservice")
+
+### Example 4: Testing a transaction with recovery failure that is involving a simple microservice
+
+![Alt text](images/transaction1microservicerecoveryfailure.png "Transaction in 1 microservice with recovery failure")
+
+### Example 5: Testing transaction that is involving a master microservice A with several microservices B, C, D, ... ZZZ
+
+![Alt text](images/transactionmasterandslavesmicroservices.png "Transaction involving master and slave microservices")
+
+### Example 6: Testing transaction with recovery failure that is involving a master microservice A with several microservices B, C, D, ... ZZZ
+
+![Alt text](images/transactionmasterandslavesmicroservicesrecoveryfailure.png "Transaction involving master and slave microservices with recovery failure")
+
 ### Examples conclusion
 
 This would be the initial approach of our implementation of microservices, enabling a workflow communication

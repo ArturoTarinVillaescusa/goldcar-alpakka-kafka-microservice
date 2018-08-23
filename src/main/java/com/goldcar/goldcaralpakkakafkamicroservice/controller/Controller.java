@@ -4,8 +4,7 @@ package com.goldcar.goldcaralpakkakafkamicroservice.controller;
 import akka.NotUsed;
 import akka.stream.javadsl.Source;
 import akka.stream.scaladsl.Sink;
-import com.goldcar.goldcaralpakkakafkamicroservice.alpakka.domainspecificlanguage.KafkaAlpakkaConsumerToProducerFlexiFlow;
-import com.goldcar.goldcaralpakkakafkamicroservice.alpakka.domainspecificlanguage.KafkaAlpakkaConsumerFlexiFlow;
+import com.goldcar.goldcaralpakkakafkamicroservice.alpakka.domainspecificlanguage.KafkaAlpakkaFlexiFlow;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -20,15 +19,15 @@ public class Controller {
     @RequestMapping("/goldcar-alpakka-producer-microservice/{topico}/{nummensajes}")
     public Source<String, NotUsed> flexiFlowProducer(@PathVariable String topico,
                                          @PathVariable Integer nummensajes) {
-        new KafkaAlpakkaConsumerFlexiFlow().produceMessages(nummensajes, topico);
+        new KafkaAlpakkaFlexiFlow().produceMessagesAsAFlow(nummensajes, topico);
         return Source.repeat("Hello world!").intersperse("\n").take(10);
     }
 
     @RequestMapping("/goldcar-alpakka-consumer-microservice/{topicoorigen}/{topicodestino}")
     public Sink<String, Future<Seq<String>>> flexiFlowConsumer(@PathVariable String topicoorigen,
                                                     @PathVariable String topicodestino) {
-        new KafkaAlpakkaConsumerToProducerFlexiFlow()
-                .consumeMessages(topicoorigen, topicodestino);
+        new KafkaAlpakkaFlexiFlow()
+                .transferMessagesFromTopicAtoTopicB(topicoorigen, topicodestino);
         return Sink.seq();
     }
 
@@ -47,8 +46,8 @@ public class Controller {
     @RequestMapping(value="/health")
     public ResponseEntity health() {
         HttpStatus status;
-        if (new KafkaAlpakkaConsumerToProducerFlexiFlow()
-                .kafkaIsUp()) {
+        if (new KafkaAlpakkaFlexiFlow()
+                .kafkaIsHealthy()) {
             status = HttpStatus.OK;
         } else {
             status = HttpStatus.BAD_REQUEST;

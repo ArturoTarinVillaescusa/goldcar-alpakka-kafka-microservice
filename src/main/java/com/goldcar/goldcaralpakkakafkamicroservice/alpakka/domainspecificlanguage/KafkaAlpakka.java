@@ -10,15 +10,17 @@ import akka.stream.Materializer;
 import akka.stream.javadsl.Flow;
 import com.typesafe.config.Config;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
+import org.apache.kafka.clients.consumer.KafkaConsumer;
 import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.common.serialization.ByteArrayDeserializer;
 import org.apache.kafka.common.serialization.ByteArraySerializer;
 import org.apache.kafka.common.serialization.StringDeserializer;
 import org.apache.kafka.common.serialization.StringSerializer;
 
+import java.util.Properties;
 import java.util.concurrent.CompletionStage;
 
-public abstract class KafkaAlpakkaSettings {
+public abstract class KafkaAlpakka {
     protected final ActorSystem system = ActorSystem.create("goldcarmicroservices");
 
     protected final Materializer materializer = ActorMaterializer.create(system);
@@ -71,6 +73,23 @@ public abstract class KafkaAlpakkaSettings {
                     return Done.getInstance();
                 })
                 .thenAccept(d -> system.terminate());
+    }
+
+    public boolean kafkaIsHealthy() {
+        try {
+            Properties props = new Properties();
+            props.put("bootstrap.servers", consumerSettings.getProperty("bootstrap.servers")); // "kafka-0.kafka-hs.default.svc.cluster.local:9093"
+            props.put("group.id",consumerSettings.getProperty("group.id")); // "group1"
+            props.put("key.deserializer", "org.apache.kafka.common.serialization.StringDeserializer");
+            props.put("value.deserializer", "org.apache.kafka.common.serialization.StringDeserializer");
+            KafkaConsumer simpleConsumer = new KafkaConsumer(props);
+            simpleConsumer.listTopics();
+        } catch (Exception e) {
+            return false;
+        }
+
+
+        return true;
     }
 
 }

@@ -18,8 +18,8 @@ import akka.kafka.Subscriptions;
 import akka.kafka.javadsl.Consumer;
 import akka.kafka.javadsl.Producer;
 import akka.stream.javadsl.Sink;
+import com.goldcar.goldcaralpakkakafkamicroservice.alpakka.domainspecificlanguage.KafkaAlpakka;
 import org.apache.kafka.clients.producer.ProducerRecord;
-import com.goldcar.goldcaralpakkakafkamicroservice.alpakka.domainspecificlanguage.KafkaAlpakkaSettings;
 
 import java.util.Arrays;
 import java.util.concurrent.CompletionStage;
@@ -27,7 +27,7 @@ import java.util.concurrent.CompletionStage;
 // #oneToMany
 
 
-public class AtLeastOnceOneToMany extends KafkaAlpakkaSettings {
+public class AtLeastOnceOneToMany extends KafkaAlpakka {
 
     public static void main(String[] args) {
         new AtLeastOnceOneToMany().demo();
@@ -64,7 +64,7 @@ public class AtLeastOnceOneToMany extends KafkaAlpakkaSettings {
 }
 
 
-class AtLeastOnceOneToConditional extends KafkaAlpakkaSettings {
+class AtLeastOnceOneToConditional extends KafkaAlpakka {
 
   public static void main(String[] args) {
       new AtLeastOnceOneToMany().demo();

@@ -18,7 +18,7 @@ import akka.kafka.javadsl.Producer;
 import akka.stream.javadsl.Keep;
 import akka.stream.javadsl.Sink;
 import akka.stream.javadsl.Source;
-import com.goldcar.goldcaralpakkakafkamicroservice.alpakka.domainspecificlanguage.KafkaAlpakkaSettings;
+import com.goldcar.goldcaralpakkakafkamicroservice.alpakka.domainspecificlanguage.KafkaAlpakka;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.common.Metric;
@@ -34,7 +34,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicLong;
 
 // Consume messages and store a representation, including offset, in OffsetStorage
-class ExternalOffsetStorage extends KafkaAlpakkaSettings {
+class ExternalOffsetStorage extends KafkaAlpakka {
   public static void main(String[] args) {
     new ExternalOffsetStorage().demo();
   }
@@ -88,7 +88,7 @@ class ExternalOffsetStorage extends KafkaAlpakkaSettings {
 }
 
 // Consume messages at-most-once
-class AtMostOnce extends KafkaAlpakkaSettings {
+class AtMostOnce extends KafkaAlpakka {
   public static void main(String[] args) {
     new AtMostOnce().demo();
   }
@@ -114,7 +114,7 @@ class AtMostOnce extends KafkaAlpakkaSettings {
 }
 
 // Consume messages at-least-once
-class KafkaAlpakkaConsumerAtLeastOnce extends KafkaAlpakkaSettings {
+class KafkaAlpakkaConsumerAtLeastOnce extends KafkaAlpakka {
   public static void main(String[] args) {
     new KafkaAlpakkaConsumerAtLeastOnce().consumeMessages();
   }
@@ -143,7 +143,7 @@ class KafkaAlpakkaConsumerAtLeastOnce extends KafkaAlpakkaSettings {
 }
 
 // Consume messages at-least-once, and commit in batches
-class AtLeastOnceWithBatchCommit extends KafkaAlpakkaSettings {
+class AtLeastOnceWithBatchCommit extends KafkaAlpakka {
   public static void main(String[] args) {
     new AtLeastOnceWithBatchCommit().demo();
   }
@@ -172,8 +172,8 @@ class AtLeastOnceWithBatchCommit extends KafkaAlpakkaSettings {
   }
 }
 
-// Connect a KafkaAlpakkaSettings to KafkaAlpakkaProducer
-class KafkaAlpakkaConsumerToProducerSink extends KafkaAlpakkaSettings {
+// Connect a KafkaAlpakka to KafkaAlpakkaProducer
+class KafkaAlpakkaConsumerToProducerSink extends KafkaAlpakka {
   public static void main(String[] args) {
     new KafkaAlpakkaConsumerToProducerSink().demo();
   }
@@ -196,8 +196,8 @@ class KafkaAlpakkaConsumerToProducerSink extends KafkaAlpakkaSettings {
 }
 
 
-// Connect a KafkaAlpakkaSettings to KafkaAlpakkaProducer, and commit in batches
-class KafkaAlpakkaConsumerToProducerWithBatchCommits extends KafkaAlpakkaSettings {
+// Connect a KafkaAlpakka to KafkaAlpakkaProducer, and commit in batches
+class KafkaAlpakkaConsumerToProducerWithBatchCommits extends KafkaAlpakka {
   public static void main(String[] args) {
     new KafkaAlpakkaConsumerToProducerWithBatchCommits().demo();
   }
@@ -229,8 +229,8 @@ class KafkaAlpakkaConsumerToProducerWithBatchCommits extends KafkaAlpakkaSetting
   }
 }
 
-// Connect a KafkaAlpakkaSettings to KafkaAlpakkaProducer, and commit in batches
-class KafkaAlpakkaConsumerToProducerWithBatchCommits2 extends KafkaAlpakkaSettings {
+// Connect a KafkaAlpakka to KafkaAlpakkaProducer, and commit in batches
+class KafkaAlpakkaConsumerToProducerWithBatchCommits2 extends KafkaAlpakka {
   public static void main(String[] args) {
     new KafkaAlpakkaConsumerToProducerWithBatchCommits2().demo();
   }
@@ -260,7 +260,7 @@ class KafkaAlpakkaConsumerToProducerWithBatchCommits2 extends KafkaAlpakkaSettin
 }
 
 // Backpressure per partition with batch commit
-class KafkaAlpakkaConsumerWithPerPartitionBackpressure extends KafkaAlpakkaSettings {
+class KafkaAlpakkaConsumerWithPerPartitionBackpressure extends KafkaAlpakka {
   public static void main(String[] args) {
     new KafkaAlpakkaConsumerWithPerPartitionBackpressure().demo();
   }
@@ -288,7 +288,7 @@ class KafkaAlpakkaConsumerWithPerPartitionBackpressure extends KafkaAlpakkaSetti
   }
 }
 
-class KafkaAlpakkaConsumerWithIndependentFlowsPerPartition extends KafkaAlpakkaSettings {
+class KafkaAlpakkaConsumerWithIndependentFlowsPerPartition extends KafkaAlpakka {
   public static void main(String[] args) {
     new KafkaAlpakkaConsumerWithIndependentFlowsPerPartition().demo();
   }
@@ -315,7 +315,7 @@ class KafkaAlpakkaConsumerWithIndependentFlowsPerPartition extends KafkaAlpakkaS
   }
 }
 
-class ExternallyControlledKafkaKafkaAlpakkaConsumer extends KafkaAlpakkaSettings {
+class ExternallyControlledKafkaKafkaAlpakkaConsumer extends KafkaAlpakka {
   public static void main(String[] args) {
     new ExternallyControlledKafkaKafkaAlpakkaConsumer().demo();
   }
@@ -352,7 +352,7 @@ class ExternallyControlledKafkaKafkaAlpakkaConsumer extends KafkaAlpakkaSettings
 }
 
 
-class RebalanceListenerCallbacks extends KafkaAlpakkaSettings {
+class RebalanceListenerCallbacks extends KafkaAlpakka {
   public static void main(String[] args) {
     new ExternallyControlledKafkaKafkaAlpakkaConsumer().demo();
   }
@@ -391,7 +391,7 @@ class RebalanceListenerCallbacks extends KafkaAlpakkaSettings {
 
 }
 
-class KafkaAlpakkaConsumerMetrics extends KafkaAlpakkaSettings {
+class KafkaAlpakkaConsumerMetrics extends KafkaAlpakka {
   public static void main(String[] args) {
     new KafkaAlpakkaConsumerMetrics().demo();
   }
@@ -412,7 +412,7 @@ class KafkaAlpakkaConsumerMetrics extends KafkaAlpakkaSettings {
 }
 
 // Shutdown via KafkaAlpakkaConsumer.Control
-class ShutdownPlainSource extends KafkaAlpakkaSettings {
+class ShutdownPlainSource extends KafkaAlpakka {
   public static void main(String[] args) {
     new ExternalOffsetStorage().demo();
   }
@@ -462,7 +462,7 @@ class ShutdownPlainSource extends KafkaAlpakkaSettings {
 }
 
 // Shutdown when batching commits
-class ShutdownCommittableSource extends KafkaAlpakkaSettings {
+class ShutdownCommittableSource extends KafkaAlpakka {
   public static void main(String[] args) {
     new KafkaAlpakkaConsumerAtLeastOnce().consumeMessages();
   }

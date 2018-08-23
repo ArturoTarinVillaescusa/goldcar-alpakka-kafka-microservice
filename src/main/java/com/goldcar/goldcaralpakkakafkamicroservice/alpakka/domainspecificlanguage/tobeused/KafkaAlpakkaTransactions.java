@@ -14,13 +14,13 @@ import akka.kafka.javadsl.Transactional;
 import akka.stream.javadsl.RestartSource;
 import akka.stream.javadsl.Sink;
 import akka.stream.javadsl.Source;
-import com.goldcar.goldcaralpakkakafkamicroservice.alpakka.domainspecificlanguage.KafkaAlpakkaSettings;
+import com.goldcar.goldcaralpakkakafkamicroservice.alpakka.domainspecificlanguage.KafkaAlpakka;
 import org.apache.kafka.clients.producer.ProducerRecord;
 
 import java.time.temporal.ChronoUnit;
 import java.util.concurrent.atomic.AtomicReference;
 
-class TransactionsSink extends KafkaAlpakkaSettings {
+class TransactionsSink extends KafkaAlpakka {
     public static void main(String[] args) {
         new TransactionsSink().demo();
     }
@@ -44,7 +44,7 @@ class TransactionsSink extends KafkaAlpakkaSettings {
     }
 }
 
-class TransactionsFailureRetryExample extends KafkaAlpakkaSettings {
+class TransactionsFailureRetryExample extends KafkaAlpakka {
     public static void main(String[] args) {
         new TransactionsFailureRetryExample().demo();
     }

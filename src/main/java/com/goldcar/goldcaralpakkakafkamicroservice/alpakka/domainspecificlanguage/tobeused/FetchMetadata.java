@@ -15,12 +15,12 @@ import akka.util.Timeout;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.TimeUnit;
 
-import com.goldcar.goldcaralpakkakafkamicroservice.alpakka.domainspecificlanguage.KafkaAlpakkaSettings;
+import com.goldcar.goldcaralpakkakafkamicroservice.alpakka.domainspecificlanguage.KafkaAlpakka;
 
 // #metadata
 
 
-public class FetchMetadata extends KafkaAlpakkaSettings {
+public class FetchMetadata extends KafkaAlpakka {
 
     public static void main(String[] args) {
         new FetchMetadata().demo();
