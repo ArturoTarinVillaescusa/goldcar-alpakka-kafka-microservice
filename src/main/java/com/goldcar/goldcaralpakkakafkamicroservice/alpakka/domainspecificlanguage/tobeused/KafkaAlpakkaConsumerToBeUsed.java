@@ -3,7 +3,7 @@
  * Copyright (C) 2016 - 2018 Lightbend Inc. <http://www.lightbend.com>
  */
 
-package com.goldcar.goldcaralpakkakafkamicroservice.controller;
+package com.goldcar.goldcaralpakkakafkamicroservice.alpakka.domainspecificlanguage.tobeused;
 
 
 import akka.Done;
@@ -15,70 +15,26 @@ import akka.actor.Props;
 import akka.japi.Pair;
 import akka.kafka.*;
 import akka.kafka.javadsl.Producer;
-import akka.stream.ActorMaterializer;
-import akka.stream.Materializer;
-import akka.stream.javadsl.*;
-import akka.stream.javadsl.Flow;
-import com.typesafe.config.Config;
-import org.apache.kafka.clients.consumer.ConsumerConfig;
+import akka.stream.javadsl.Keep;
+import akka.stream.javadsl.Sink;
+import akka.stream.javadsl.Source;
+import com.goldcar.goldcaralpakkakafkamicroservice.alpakka.domainspecificlanguage.KafkaAlpakkaSettings;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
-import org.apache.kafka.clients.consumer.KafkaConsumer;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.common.Metric;
 import org.apache.kafka.common.MetricName;
 import org.apache.kafka.common.TopicPartition;
-import org.apache.kafka.common.serialization.ByteArrayDeserializer;
-import org.apache.kafka.common.serialization.ByteArraySerializer;
-import org.apache.kafka.common.serialization.StringDeserializer;
-import org.apache.kafka.common.serialization.StringSerializer;
 
 import java.time.temporal.ChronoUnit;
 import java.util.Map;
-import java.util.Properties;
-import java.util.concurrent.*;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
+import java.util.concurrent.Executor;
+import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicLong;
 
-abstract class KafkaAlpakkaConsumer {
-  protected final ActorSystem system = ActorSystem.create("example");
-
-  protected final Materializer materializer = ActorMaterializer.create(system);
-
-  protected final int maxPartitions = 100;
-
-  protected <T> Flow<T, T, NotUsed> business() {
-    return Flow.create();
-  }
-
-  // #settings
-  final Config config = system.settings().config().getConfig("akka.kafka.consumer");
-  final ConsumerSettings<String, byte[]> consumerSettings =
-      ConsumerSettings.create(config, new StringDeserializer(), new ByteArrayDeserializer())
-          //.withBootstrapServers("localhost:9092")
-          // HARDCODED TO THE KUBERNETES KAFKA STANDALONE DEPLOYMENT!!!
-          // NEEDS TO BE CONFIGURABLE.
-          .withBootstrapServers("kafka-0.kafka-hs.default.svc.cluster.local:9093")
-          .withGroupId("group1")
-          .withProperty(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");
-  // #settings
-
-  final ConsumerSettings<String, byte[]> consumerSettingsWithAutoCommit =
-          // #settings-autocommit
-          consumerSettings
-                  .withProperty(ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG, "true")
-                  .withProperty(ConsumerConfig.AUTO_COMMIT_INTERVAL_MS_CONFIG, "5000");
-          // #settings-autocommit
-
-  protected final ProducerSettings<String, byte[]> producerSettings =
-      ProducerSettings.create(system, new StringSerializer(), new ByteArraySerializer())
-              //.withBootstrapServers("localhost:9092");
-              // HARDCODED TO THE KUBERNETES KAFKA STANDALONE DEPLOYMENT!!!
-              // NEEDS TO BE CONFIGURABLE.
-              .withBootstrapServers("kafka-0.kafka-hs.default.svc.cluster.local:9093");
-
-}
-
 // Consume messages and store a representation, including offset, in OffsetStorage
-class ExternalOffsetStorage extends KafkaAlpakkaConsumer {
+class ExternalOffsetStorage extends KafkaAlpakkaSettings {
   public static void main(String[] args) {
     new ExternalOffsetStorage().demo();
   }
@@ -132,7 +88,7 @@ class ExternalOffsetStorage extends KafkaAlpakkaConsumer {
 }
 
 // Consume messages at-most-once
-class AtMostOnce extends KafkaAlpakkaConsumer {
+class AtMostOnce extends KafkaAlpakkaSettings {
   public static void main(String[] args) {
     new AtMostOnce().demo();
   }
@@ -158,7 +114,7 @@ class AtMostOnce extends KafkaAlpakkaConsumer {
 }
 
 // Consume messages at-least-once
-class KafkaAlpakkaConsumerAtLeastOnce extends KafkaAlpakkaConsumer {
+class KafkaAlpakkaConsumerAtLeastOnce extends KafkaAlpakkaSettings {
   public static void main(String[] args) {
     new KafkaAlpakkaConsumerAtLeastOnce().consumeMessages();
   }
@@ -187,7 +143,7 @@ class KafkaAlpakkaConsumerAtLeastOnce extends KafkaAlpakkaConsumer {
 }
 
 // Consume messages at-least-once, and commit in batches
-class AtLeastOnceWithBatchCommit extends KafkaAlpakkaConsumer {
+class AtLeastOnceWithBatchCommit extends KafkaAlpakkaSettings {
   public static void main(String[] args) {
     new AtLeastOnceWithBatchCommit().demo();
   }
@@ -216,8 +172,8 @@ class AtLeastOnceWithBatchCommit extends KafkaAlpakkaConsumer {
   }
 }
 
-// Connect a KafkaAlpakkaConsumer to KafkaAlpakkaProducer
-class KafkaAlpakkaConsumerToProducerSink extends KafkaAlpakkaConsumer {
+// Connect a KafkaAlpakkaSettings to KafkaAlpakkaProducer
+class KafkaAlpakkaConsumerToProducerSink extends KafkaAlpakkaSettings {
   public static void main(String[] args) {
     new KafkaAlpakkaConsumerToProducerSink().demo();
   }
@@ -232,62 +188,16 @@ class KafkaAlpakkaConsumerToProducerSink extends KafkaAlpakkaConsumer {
                   msg.committableOffset()
               )
           )
-          .to(Producer.commitableSink(producerSettings))
+          .to(Producer.commitableSink(consumerToProducerSettings))
           .run(materializer);
     // #consumerToProducerSink
     control.shutdown();
   }
 }
 
-// Connect a KafkaAlpakkaConsumer to KafkaAlpakkaProducer
-class KafkaAlpakkaConsumerToProducerFlexiFlow extends KafkaAlpakkaConsumer {
-  public void consumeMessages(String topicoDelQueConsumimos, String topicoAlQueProducimos) {
-      // #consumerToProducerFlow
-      akka.kafka.javadsl.Consumer.DrainingControl<Done> control =
-          akka.kafka.javadsl.Consumer.committableSource(consumerSettings, Subscriptions.topics(topicoDelQueConsumimos))
-              .map(msg -> {
-                ProducerMessage.Envelope<String, byte[], ConsumerMessage.Committable> prodMsg =
-                    new ProducerMessage.Message<>(
-                        new ProducerRecord<>(topicoAlQueProducimos, msg.record().value()),
-                        msg.committableOffset() // the passThrough
-                    );
-                return prodMsg;
-              })
 
-              .via(Producer.flexiFlow(producerSettings))
-
-              .mapAsync(producerSettings.parallelism(), result -> {
-                  ConsumerMessage.Committable committable = result.passThrough();
-                  return committable.commitJavadsl();
-              })
-              .toMat(Sink.ignore(), Keep.both())
-              .mapMaterializedValue(akka.kafka.javadsl.Consumer::createDrainingControl)
-              .run(materializer);
-      // #consumerToProducerFlow
-  }
-
-  public boolean kafkaIsUp() {
-      try {
-          Properties props = new Properties();
-          props.put("bootstrap.servers", consumerSettings.getProperty("bootstrap.servers")); // "kafka-0.kafka-hs.default.svc.cluster.local:9093"
-          props.put("group.id",consumerSettings.getProperty("group.id")); // "group1"
-          props.put("key.deserializer", "org.apache.kafka.common.serialization.StringDeserializer");
-          props.put("value.deserializer", "org.apache.kafka.common.serialization.StringDeserializer");
-          KafkaConsumer simpleConsumer = new KafkaConsumer(props);
-          simpleConsumer.listTopics();
-      } catch (Exception e) {
-        return false;
-      }
-
-
-      return true;
-  }
-}
-
-
-
-// Connect a KafkaAlpakkaConsumer to KafkaAlpakkaProducer, and commit in batches
-class KafkaAlpakkaConsumerToProducerWithBatchCommits extends KafkaAlpakkaConsumer {
+// Connect a KafkaAlpakkaSettings to KafkaAlpakkaProducer, and commit in batches
+class KafkaAlpakkaConsumerToProducerWithBatchCommits extends KafkaAlpakkaSettings {
   public static void main(String[] args) {
     new KafkaAlpakkaConsumerToProducerWithBatchCommits().demo();
   }
@@ -304,7 +214,7 @@ class KafkaAlpakkaConsumerToProducerWithBatchCommits extends KafkaAlpakkaConsume
               );
           return prodMsg;
       })
-      .via(Producer.flexiFlow(producerSettings))
+      .via(Producer.flexiFlow(consumerToProducerSettings))
       .map(result -> result.passThrough());
 
     source
@@ -319,8 +229,8 @@ class KafkaAlpakkaConsumerToProducerWithBatchCommits extends KafkaAlpakkaConsume
   }
 }
 
-// Connect a KafkaAlpakkaConsumer to KafkaAlpakkaProducer, and commit in batches
-class KafkaAlpakkaConsumerToProducerWithBatchCommits2 extends KafkaAlpakkaConsumer {
+// Connect a KafkaAlpakkaSettings to KafkaAlpakkaProducer, and commit in batches
+class KafkaAlpakkaConsumerToProducerWithBatchCommits2 extends KafkaAlpakkaSettings {
   public static void main(String[] args) {
     new KafkaAlpakkaConsumerToProducerWithBatchCommits2().demo();
   }
@@ -336,7 +246,7 @@ class KafkaAlpakkaConsumerToProducerWithBatchCommits2 extends KafkaAlpakkaConsum
               );
           return prodMsg;
       })
-      .via(Producer.flexiFlow(producerSettings))
+      .via(Producer.flexiFlow(consumerToProducerSettings))
       .map(result -> result.passThrough());
 
       // #groupedWithin
@@ -350,7 +260,7 @@ class KafkaAlpakkaConsumerToProducerWithBatchCommits2 extends KafkaAlpakkaConsum
 }
 
 // Backpressure per partition with batch commit
-class KafkaAlpakkaConsumerWithPerPartitionBackpressure extends KafkaAlpakkaConsumer {
+class KafkaAlpakkaConsumerWithPerPartitionBackpressure extends KafkaAlpakkaSettings {
   public static void main(String[] args) {
     new KafkaAlpakkaConsumerWithPerPartitionBackpressure().demo();
   }
@@ -378,7 +288,7 @@ class KafkaAlpakkaConsumerWithPerPartitionBackpressure extends KafkaAlpakkaConsu
   }
 }
 
-class KafkaAlpakkaConsumerWithIndependentFlowsPerPartition extends KafkaAlpakkaConsumer {
+class KafkaAlpakkaConsumerWithIndependentFlowsPerPartition extends KafkaAlpakkaSettings {
   public static void main(String[] args) {
     new KafkaAlpakkaConsumerWithIndependentFlowsPerPartition().demo();
   }
@@ -405,7 +315,7 @@ class KafkaAlpakkaConsumerWithIndependentFlowsPerPartition extends KafkaAlpakkaC
   }
 }
 
-class ExternallyControlledKafkaKafkaAlpakkaConsumer extends KafkaAlpakkaConsumer {
+class ExternallyControlledKafkaKafkaAlpakkaConsumer extends KafkaAlpakkaSettings {
   public static void main(String[] args) {
     new ExternallyControlledKafkaKafkaAlpakkaConsumer().demo();
   }
@@ -442,7 +352,7 @@ class ExternallyControlledKafkaKafkaAlpakkaConsumer extends KafkaAlpakkaConsumer
 }
 
 
-class RebalanceListenerCallbacks extends KafkaAlpakkaConsumer {
+class RebalanceListenerCallbacks extends KafkaAlpakkaSettings {
   public static void main(String[] args) {
     new ExternallyControlledKafkaKafkaAlpakkaConsumer().demo();
   }
@@ -481,7 +391,7 @@ class RebalanceListenerCallbacks extends KafkaAlpakkaConsumer {
 
 }
 
-class KafkaAlpakkaConsumerMetrics extends KafkaAlpakkaConsumer {
+class KafkaAlpakkaConsumerMetrics extends KafkaAlpakkaSettings {
   public static void main(String[] args) {
     new KafkaAlpakkaConsumerMetrics().demo();
   }
@@ -502,7 +412,7 @@ class KafkaAlpakkaConsumerMetrics extends KafkaAlpakkaConsumer {
 }
 
 // Shutdown via KafkaAlpakkaConsumer.Control
-class ShutdownPlainSource extends KafkaAlpakkaConsumer {
+class ShutdownPlainSource extends KafkaAlpakkaSettings {
   public static void main(String[] args) {
     new ExternalOffsetStorage().demo();
   }
@@ -552,7 +462,7 @@ class ShutdownPlainSource extends KafkaAlpakkaConsumer {
 }
 
 // Shutdown when batching commits
-class ShutdownCommittableSource extends KafkaAlpakkaConsumer {
+class ShutdownCommittableSource extends KafkaAlpakkaSettings {
   public static void main(String[] args) {
     new KafkaAlpakkaConsumerAtLeastOnce().consumeMessages();
   }

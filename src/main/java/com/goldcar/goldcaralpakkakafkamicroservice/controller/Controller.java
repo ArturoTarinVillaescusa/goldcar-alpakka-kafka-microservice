@@ -4,11 +4,12 @@ package com.goldcar.goldcaralpakkakafkamicroservice.controller;
 import akka.NotUsed;
 import akka.stream.javadsl.Source;
 import akka.stream.scaladsl.Sink;
+import com.goldcar.goldcaralpakkakafkamicroservice.alpakka.domainspecificlanguage.KafkaAlpakkaConsumerToProducerFlexiFlow;
+import com.goldcar.goldcaralpakkakafkamicroservice.alpakka.domainspecificlanguage.KafkaAlpakkaConsumerFlexiFlow;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
 import scala.collection.immutable.Seq;
 import scala.concurrent.Future;
@@ -17,14 +18,14 @@ import scala.concurrent.Future;
 public class Controller {
 
     @RequestMapping("/goldcar-alpakka-producer-microservice/{topico}/{nummensajes}")
-    public Source<String, NotUsed> index(@PathVariable String topico,
+    public Source<String, NotUsed> flexiFlowProducer(@PathVariable String topico,
                                          @PathVariable Integer nummensajes) {
-        new KafkaAlpakkaProducerFlexiFlow().produceMessages(nummensajes, topico);
+        new KafkaAlpakkaConsumerFlexiFlow().produceMessages(nummensajes, topico);
         return Source.repeat("Hello world!").intersperse("\n").take(10);
     }
 
     @RequestMapping("/goldcar-alpakka-consumer-microservice/{topicoorigen}/{topicodestino}")
-    public Sink<String, Future<Seq<String>>> index1(@PathVariable String topicoorigen,
+    public Sink<String, Future<Seq<String>>> flexiFlowConsumer(@PathVariable String topicoorigen,
                                                     @PathVariable String topicodestino) {
         new KafkaAlpakkaConsumerToProducerFlexiFlow()
                 .consumeMessages(topicoorigen, topicodestino);

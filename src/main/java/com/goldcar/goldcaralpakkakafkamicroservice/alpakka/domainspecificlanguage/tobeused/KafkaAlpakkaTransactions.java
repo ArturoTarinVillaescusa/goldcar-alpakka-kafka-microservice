@@ -3,7 +3,7 @@
  * Copyright (C) 2016 - 2018 Lightbend Inc. <http://www.lightbend.com>
  */
 
-package com.goldcar.goldcaralpakkakafkamicroservice.controller;
+package com.goldcar.goldcaralpakkakafkamicroservice.alpakka.domainspecificlanguage.tobeused;
 
 import akka.NotUsed;
 import akka.kafka.ConsumerMessage;
@@ -14,14 +14,15 @@ import akka.kafka.javadsl.Transactional;
 import akka.stream.javadsl.RestartSource;
 import akka.stream.javadsl.Sink;
 import akka.stream.javadsl.Source;
+import com.goldcar.goldcaralpakkakafkamicroservice.alpakka.domainspecificlanguage.KafkaAlpakkaSettings;
 import org.apache.kafka.clients.producer.ProducerRecord;
 
 import java.time.temporal.ChronoUnit;
 import java.util.concurrent.atomic.AtomicReference;
 
-class TransactionsSink extends KafkaAlpakkaConsumer {
+class TransactionsSink extends KafkaAlpakkaSettings {
     public static void main(String[] args) {
-        new TransactionsFailureRetryExample().demo();
+        new TransactionsSink().demo();
     }
 
     public void demo() {
@@ -33,7 +34,7 @@ class TransactionsSink extends KafkaAlpakkaConsumer {
                 .map(msg ->
                         new ProducerMessage.Message<String, byte[], ConsumerMessage.PartitionOffset>(
                                 new ProducerRecord<>("sink-topic", msg.record().value()), msg.partitionOffset()))
-                .to(Transactional.sink(producerSettings, "transactional-id"))
+                .to(Transactional.sink(consumerToProducerSettings, "transactional-id"))
                 .run(materializer);
 
         // ...
@@ -43,7 +44,7 @@ class TransactionsSink extends KafkaAlpakkaConsumer {
     }
 }
 
-class TransactionsFailureRetryExample extends KafkaAlpakkaConsumer {
+class TransactionsFailureRetryExample extends KafkaAlpakkaSettings {
     public static void main(String[] args) {
         new TransactionsFailureRetryExample().demo();
     }
@@ -67,7 +68,7 @@ class TransactionsFailureRetryExample extends KafkaAlpakkaConsumer {
                         innerControl.set(control);
                         return control;
                     })
-                    .via(Transactional.flow(producerSettings, "transactional-id")));
+                    .via(Transactional.flow(consumerToProducerSettings, "transactional-id")));
 
         stream.runWith(Sink.ignore(), materializer);
 

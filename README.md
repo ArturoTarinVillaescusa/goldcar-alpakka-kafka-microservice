@@ -534,6 +534,13 @@ zk-0      1/1       Running   0          1m
 
 ![Alt text](images/zookeeperlogs.png "Zookeeper logs")
 
+```bash
+arturotarin@QOSMIO-X70B:~$ kubectl logs --tail=2 -lapp=zk
+2018-08-23 04:38:41,289 [myid:] - INFO  [NIOServerCxn.Factory:0.0.0.0/0.0.0.0:2181:NIOServerCnxn@883] - Processing ruok command from /127.0.0.1:53356
+2018-08-23 04:38:41,293 [myid:] - INFO  [Thread-121:NIOServerCnxn@1044] - Closed socket connection for client /127.0.0.1:53356 (no session established for client)
+
+```
+
 ***Create a standalone Kafka application***
 
 ```bash
@@ -552,6 +559,11 @@ kafka-0   1/1       Running   0          1m
 
 ![Alt text](images/kafkalogs.png "Kafka logs")
 
+```bash
+arturotarin@QOSMIO-X70B:~$ kubectl logs --tail=2 -lapp=kafka
+[2018-08-23 04:35:13,911] DEBUG [Controller 0]: topics not in preferred replica Map() (kafka.controller.KafkaController)
+[2018-08-23 04:35:13,911] TRACE [Controller 0]: leader imbalance ratio for broker 0 is 0.000000 (kafka.controller.KafkaController)
+```
 
 ***Get Kafka and Zookeeper metrics***
 
@@ -731,6 +743,17 @@ service "goldcar-alpakka-kafka-microservice-service" created
 
 ![Alt text](images/goldcar-alpakka-kafka-microservice-logs.png "Application logs")
 
+The command gets the last two lines of the log in every pod of the deployment:
+
+```bash
+arturotarin@QOSMIO-X70B:~$ kubectl logs --tail=2 -lapp=goldcar-alpakka-kafka-microservice
+2018-08-23 04:29:10.387  INFO 1 --- [           main] o.s.b.w.embedded.tomcat.TomcatWebServer  : Tomcat started on port(s): 8080 (http) with context path ''
+2018-08-23 04:29:10.459  INFO 1 --- [           main] c.g.g.Application                        : Started Application in 40.007 seconds (JVM running for 48.163)
+2018-08-23 04:29:10.360  INFO 1 --- [           main] o.s.b.w.embedded.tomcat.TomcatWebServer  : Tomcat started on port(s): 8080 (http) with context path ''
+2018-08-23 04:29:10.457  INFO 1 --- [           main] c.g.g.Application                        : Started Application in 39.982 seconds (JVM running for 54.087)
+2018-08-23 04:29:10.364  INFO 1 --- [           main] o.s.b.w.embedded.tomcat.TomcatWebServer  : Tomcat started on port(s): 8080 (http) with context path ''
+2018-08-23 04:29:10.463  INFO 1 --- [           main] c.g.g.Application                        : Started Application in 39.967 seconds (JVM running for 47.546)
+```
 
 You can visit the application at http://your-minkube-ip:32000
 
