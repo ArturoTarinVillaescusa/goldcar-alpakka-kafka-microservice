@@ -135,11 +135,7 @@ public class KafkaAlpakkaConsumerFlexiFlow extends KafkaAlpakkaSettings {
     }
 
     public class ObserveMetrics extends KafkaAlpakkaSettings {
-        public void main(String[] args) {
-            new PlainSink().demo();
-        }
-
-        public void demo() {
+        public void getProducerMetrics() {
             // #producerMetrics
             Map<MetricName, ? extends Metric> metrics =
                     kafkaProducer.metrics();// observe metrics
